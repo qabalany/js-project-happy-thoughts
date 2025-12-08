@@ -23,3 +23,6 @@ package-lock.json
 *.njsproj
 *.sln
 *.sw?
+
+# Project context files (not for GitHub)
+src/ignored/
