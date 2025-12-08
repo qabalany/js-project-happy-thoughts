@@ -51,9 +51,9 @@ const SubmitButton = styled.button`
   }
 `
 
-export const ThoughtForm = () => {
+export const ThoughtForm = ({ onSubmit, message, onMessageChange }) => {
   return (
-    <FormCard>
+    <FormCard onSubmit={onSubmit}>
       <FormLabel htmlFor="thought-input">
         What's making you happy right now?
       </FormLabel>
@@ -61,6 +61,8 @@ export const ThoughtForm = () => {
         id="thought-input"
         placeholder="Type your happy thought..."
         rows={4}
+        value={message}
+        onChange={(e) => onMessageChange(e.target.value)}
       />
       <SubmitButton type="submit">
         ❤️ Send Happy Thought ❤️

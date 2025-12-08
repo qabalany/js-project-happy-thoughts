@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import styled from 'styled-components'
 import { ThoughtForm } from './components/ThoughtForm'
 import { ThoughtList } from './components/ThoughtList'
 
-// Dummy data للتجربة - سيتم استبدالها بـ API لاحقاً
+// Dummy data for testing - will be replaced with API later
 const dummyThoughts = [
   {
     _id: "1",
@@ -43,12 +44,44 @@ const Title = styled.h1`
 `
 
 export const App = () => {
+  // State for thoughts (list of thoughts)
+  const [thoughts, setThoughts] = useState(dummyThoughts)
+  
+  // State for the message (text in the form)
+  const [newMessage, setNewMessage] = useState("")
+
+  // Function to add a new thought
+  const handleFormSubmit = (event) => {
+    event.preventDefault() // منع reload الصفحة
+    
+    // Don't add if the text is empty
+    if (!newMessage.trim()) return
+    
+    // Create new thought
+    const newThought = {
+      _id: Date.now().toString(), // Temporary ID
+      message: newMessage,
+      hearts: 0,
+      createdAt: "Just now"
+    }
+    
+    // Add the new thought to the beginning of the array
+    setThoughts([newThought, ...thoughts])
+    
+    // Clear the form
+    setNewMessage("")
+  }
+
   return (
     <MainWrapper>
       <Container>
         <Title>Happy Thoughts</Title>
-        <ThoughtForm />
-        <ThoughtList thoughts={dummyThoughts} />
+        <ThoughtForm 
+          onSubmit={handleFormSubmit}
+          message={newMessage}
+          onMessageChange={setNewMessage}
+        />
+        <ThoughtList thoughts={thoughts} />
       </Container>
     </MainWrapper>
   )
