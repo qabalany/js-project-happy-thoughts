@@ -1,8 +1,14 @@
+import styled from 'styled-components'
 import { ThoughtCard } from './ThoughtCard'
+
+const ListSection = styled.section`
+  display: flex;
+  flex-direction: column;
+`
 
 export const ThoughtList = ({ thoughts }) => {
   return (
-    <section className="thought-list">
+    <ListSection>
       {thoughts.map(thought => (
         <ThoughtCard
           key={thought._id}
@@ -11,6 +17,6 @@ export const ThoughtList = ({ thoughts }) => {
           createdAt={thought.createdAt}
         />
       ))}
-    </section>
+    </ListSection>
   )
 }

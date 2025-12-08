@@ -1,3 +1,4 @@
+import styled from 'styled-components'
 import { ThoughtForm } from './components/ThoughtForm'
 import { ThoughtList } from './components/ThoughtList'
 
@@ -23,12 +24,32 @@ const dummyThoughts = [
   }
 ]
 
+const MainWrapper = styled.main`
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20px 16px;
+`
+
+const Container = styled.div`
+  max-width: 600px;
+  margin: 0 auto;
+`
+
+const Title = styled.h1`
+  text-align: center;
+  font-size: 2rem;
+  color: #222;
+  margin-bottom: 24px;
+`
+
 export const App = () => {
   return (
-    <main className="app-container">
-      <h1>Happy Thoughts</h1>
-      <ThoughtForm />
-      <ThoughtList thoughts={dummyThoughts} />
-    </main>
+    <MainWrapper>
+      <Container>
+        <Title>Happy Thoughts</Title>
+        <ThoughtForm />
+        <ThoughtList thoughts={dummyThoughts} />
+      </Container>
+    </MainWrapper>
   )
 }
