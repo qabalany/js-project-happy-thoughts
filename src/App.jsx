@@ -4,7 +4,7 @@ import { ThoughtForm } from './components/ThoughtForm'
 import { ThoughtList } from './components/ThoughtList'
 
 // API URL
-const API_URL = "https://happy-thoughts-ux7hkzgmwa-uc.a.run.app/thoughts"
+const API_URL = "https://happy-thoughts-api-6cxk.onrender.com/thoughts"
 
 const MainWrapper = styled.main`
   min-height: 100vh;
@@ -54,22 +54,34 @@ export const App = () => {
       })
   }, []) // Empty array = run once on mount
 
-  // Function to add a new thought
+  // Function to add a new thought (POST to API)
   const handleFormSubmit = (event) => {
     event.preventDefault()
     
     if (!newMessage.trim()) return
     
-    // Create new thought locally (temporary)
-    const newThought = {
-      _id: Date.now().toString(),
-      message: newMessage,
-      hearts: 0,
-      createdAt: new Date().toISOString()
-    }
-    
-    setThoughts([newThought, ...thoughts])
-    setNewMessage("")
+    // POST the new thought to API
+    fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: newMessage })
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to post thought")
+        }
+        return response.json()
+      })
+      .then(newThought => {
+        // Add the new thought from API to the beginning of the list
+        setThoughts(prevThoughts => [newThought, ...prevThoughts])
+        setNewMessage("")
+      })
+      .catch(error => {
+        console.error("Error posting thought:", error)
+      })
   }
 
   return (
