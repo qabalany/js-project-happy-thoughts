@@ -1,29 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { ThoughtForm } from './components/ThoughtForm'
 import { ThoughtList } from './components/ThoughtList'
 
-// Dummy data for testing - will be replaced with API later
-const dummyThoughts = [
-  {
-    _id: "1",
-    message: "I just learned React and it's awesome!",
-    hearts: 5,
-    createdAt: "2 minutes ago"
-  },
-  {
-    _id: "2", 
-    message: "Coffee makes everything better ☕",
-    hearts: 12,
-    createdAt: "10 minutes ago"
-  },
-  {
-    _id: "3",
-    message: "Finally finished my project!",
-    hearts: 8,
-    createdAt: "1 hour ago"
-  }
-]
+// API URL
+const API_URL = "https://happy-thoughts-ux7hkzgmwa-uc.a.run.app/thoughts"
 
 const MainWrapper = styled.main`
   min-height: 100vh;
@@ -43,32 +24,51 @@ const Title = styled.h1`
   margin-bottom: 24px;
 `
 
+const LoadingText = styled.p`
+  text-align: center;
+  color: #666;
+  font-size: 1.1rem;
+`
+
 export const App = () => {
   // State for thoughts (list of thoughts)
-  const [thoughts, setThoughts] = useState(dummyThoughts)
+  const [thoughts, setThoughts] = useState([])
   
   // State for the message (text in the form)
   const [newMessage, setNewMessage] = useState("")
+  
+  // State for loading
+  const [loading, setLoading] = useState(true)
+
+  // Fetch thoughts from API when component mounts
+  useEffect(() => {
+    fetch(API_URL)
+      .then(response => response.json())
+      .then(data => {
+        setThoughts(data)
+        setLoading(false)
+      })
+      .catch(error => {
+        console.error("Error fetching thoughts:", error)
+        setLoading(false)
+      })
+  }, []) // Empty array = run once on mount
 
   // Function to add a new thought
   const handleFormSubmit = (event) => {
-    event.preventDefault() // منع reload الصفحة
+    event.preventDefault()
     
-    // Don't add if the text is empty
     if (!newMessage.trim()) return
     
-    // Create new thought
+    // Create new thought locally (temporary)
     const newThought = {
-      _id: Date.now().toString(), // Temporary ID
+      _id: Date.now().toString(),
       message: newMessage,
       hearts: 0,
-      createdAt: "Just now"
+      createdAt: new Date().toISOString()
     }
     
-    // Add the new thought to the beginning of the array
     setThoughts([newThought, ...thoughts])
-    
-    // Clear the form
     setNewMessage("")
   }
 
@@ -81,7 +81,11 @@ export const App = () => {
           message={newMessage}
           onMessageChange={setNewMessage}
         />
-        <ThoughtList thoughts={thoughts} />
+        {loading ? (
+          <LoadingText>Loading thoughts...</LoadingText>
+        ) : (
+          <ThoughtList thoughts={thoughts} />
+        )}
       </Container>
     </MainWrapper>
   )
