@@ -84,6 +84,27 @@ export const App = () => {
       })
   }
 
+  // Function to like a thought (POST to API)
+  const handleLikeThought = (thoughtId) => {
+    fetch(`${API_URL}/${thoughtId}/like`, {
+      method: "POST"
+    })
+      .then(response => response.json())
+      .then(updatedThought => {
+        // Update the thought in state with new hearts count
+        setThoughts(prevThoughts =>
+          prevThoughts.map(thought =>
+            thought._id === thoughtId
+              ? { ...thought, hearts: updatedThought.hearts }
+              : thought
+          )
+        )
+      })
+      .catch(error => {
+        console.error("Error liking thought:", error)
+      })
+  }
+
   return (
     <MainWrapper>
       <Container>
@@ -96,7 +117,7 @@ export const App = () => {
         {loading ? (
           <LoadingText>Loading thoughts...</LoadingText>
         ) : (
-          <ThoughtList thoughts={thoughts} />
+          <ThoughtList thoughts={thoughts} onLike={handleLikeThought} />
         )}
       </Container>
     </MainWrapper>

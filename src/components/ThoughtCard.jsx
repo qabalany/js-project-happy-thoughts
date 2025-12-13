@@ -72,13 +72,15 @@ const formatTimeAgo = (dateString) => {
   return `${days} days ago`
 }
 
-export const ThoughtCard = ({ message, hearts, createdAt }) => {
+export const ThoughtCard = ({ id, message, hearts, createdAt, onLike }) => {
   return (
     <Card>
       <Message>{message}</Message>
       <Footer>
         <LikeSection>
-          <HeartButton>❤️</HeartButton>
+          <HeartButton onClick={() => onLike(id)}>
+            ❤️
+          </HeartButton>
           <LikeCount>x {hearts}</LikeCount>
         </LikeSection>
         <TimeStamp>{formatTimeAgo(createdAt)}</TimeStamp>
