@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { ThoughtForm } from './components/ThoughtForm'
 import { ThoughtList } from './components/ThoughtList'
-
-// API URL
-const API_URL = "https://happy-thoughts-api-6cxk.onrender.com/thoughts"
+import { supabase } from './supabase'
 
 const MainWrapper = styled.main`
   min-height: 100vh;
@@ -43,22 +41,27 @@ export const App = () => {
   // State for submitting (loading state for form)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Fetch thoughts from API when component mounts
+  // Fetch thoughts from Supabase when component mounts
   useEffect(() => {
-    fetch(API_URL)
-      .then(response => response.json())
-      .then(data => {
-        setThoughts(data)
-        setLoading(false)
-      })
-      .catch(error => {
+    const fetchThoughts = async () => {
+      const { data, error } = await supabase
+        .from('thoughts')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) {
         console.error("Error fetching thoughts:", error)
-        setLoading(false)
-      })
-  }, []) // Empty array = run once on mount
+      } else {
+        setThoughts(data)
+      }
+      setLoading(false)
+    }
+    
+    fetchThoughts()
+  }, [])
 
-  // Function to add a new thought (POST to API)
-  const handleFormSubmit = (event) => {
+  // Function to add a new thought (POST to Supabase)
+  const handleFormSubmit = async (event) => {
     event.preventDefault()
     
     if (!newMessage.trim()) return
@@ -66,52 +69,43 @@ export const App = () => {
     
     setIsSubmitting(true)
     
-    // POST the new thought to API
-    fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ message: newMessage })
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Failed to post thought")
-        }
-        return response.json()
-      })
-      .then(newThought => {
-        // Add the new thought from API to the beginning of the list
-        setThoughts(prevThoughts => [newThought, ...prevThoughts])
-        setNewMessage("")
-      })
-      .catch(error => {
-        console.error("Error posting thought:", error)
-      })
-      .finally(() => {
-        setIsSubmitting(false)
-      })
+    const { data, error } = await supabase
+      .from('thoughts')
+      .insert([{ message: newMessage, hearts: 0 }])
+      .select()
+    
+    if (error) {
+      console.error("Error posting thought:", error)
+    } else {
+      setThoughts(prevThoughts => [data[0], ...prevThoughts])
+      setNewMessage("")
+    }
+    
+    setIsSubmitting(false)
   }
 
-  // Function to like a thought (POST to API)
-  const handleLikeThought = (thoughtId) => {
-    fetch(`${API_URL}/${thoughtId}/like`, {
-      method: "POST"
-    })
-      .then(response => response.json())
-      .then(updatedThought => {
-        // Update the thought in state with new hearts count
-        setThoughts(prevThoughts =>
-          prevThoughts.map(thought =>
-            thought._id === thoughtId
-              ? { ...thought, hearts: updatedThought.hearts }
-              : thought
-          )
+  // Function to like a thought (UPDATE in Supabase)
+  const handleLikeThought = async (thoughtId) => {
+    // Find current hearts count
+    const thought = thoughts.find(t => t.id === thoughtId)
+    const newHearts = (thought?.hearts || 0) + 1
+    
+    const { error } = await supabase
+      .from('thoughts')
+      .update({ hearts: newHearts })
+      .eq('id', thoughtId)
+    
+    if (error) {
+      console.error("Error liking thought:", error)
+    } else {
+      setThoughts(prevThoughts =>
+        prevThoughts.map(t =>
+          t.id === thoughtId
+            ? { ...t, hearts: newHearts }
+            : t
         )
-      })
-      .catch(error => {
-        console.error("Error liking thought:", error)
-      })
+      )
+    }
   }
 
   return (

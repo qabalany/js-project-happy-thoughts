@@ -11,11 +11,11 @@ export const ThoughtList = ({ thoughts, onLike }) => {
     <ListSection>
       {thoughts.map(thought => (
         <ThoughtCard
-          key={thought._id}
-          id={thought._id}
+          key={thought.id}
+          id={thought.id}
           message={thought.message}
           hearts={thought.hearts}
-          createdAt={thought.createdAt}
+          createdAt={thought.created_at}
           onLike={onLike}
         />
       ))}
