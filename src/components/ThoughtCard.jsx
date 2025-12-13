@@ -33,7 +33,7 @@ const HeartButton = styled.button`
   height: 40px;
   border-radius: 50%;
   border: none;
-  background-color: #eee;
+  background-color: ${props => props.$isLiked ? '#ffadad' : '#eee'};
   font-size: 1.2rem;
   cursor: pointer;
   display: flex;
@@ -73,12 +73,14 @@ const formatTimeAgo = (dateString) => {
 }
 
 export const ThoughtCard = ({ id, message, hearts, createdAt, onLike }) => {
+  const isLiked = hearts > 0
+  
   return (
     <Card>
       <Message>{message}</Message>
       <Footer>
         <LikeSection>
-          <HeartButton onClick={() => onLike(id)}>
+          <HeartButton onClick={() => onLike(id)} $isLiked={isLiked}>
             ❤️
           </HeartButton>
           <LikeCount>x {hearts}</LikeCount>

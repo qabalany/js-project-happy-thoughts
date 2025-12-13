@@ -39,6 +39,9 @@ export const App = () => {
   
   // State for loading
   const [loading, setLoading] = useState(true)
+  
+  // State for submitting (loading state for form)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Fetch thoughts from API when component mounts
   useEffect(() => {
@@ -59,6 +62,9 @@ export const App = () => {
     event.preventDefault()
     
     if (!newMessage.trim()) return
+    if (newMessage.length < 5 || newMessage.length > 140) return
+    
+    setIsSubmitting(true)
     
     // POST the new thought to API
     fetch(API_URL, {
@@ -81,6 +87,9 @@ export const App = () => {
       })
       .catch(error => {
         console.error("Error posting thought:", error)
+      })
+      .finally(() => {
+        setIsSubmitting(false)
       })
   }
 
@@ -113,6 +122,7 @@ export const App = () => {
           onSubmit={handleFormSubmit}
           message={newMessage}
           onMessageChange={setNewMessage}
+          isSubmitting={isSubmitting}
         />
         {loading ? (
           <LoadingText>Loading thoughts...</LoadingText>

@@ -20,7 +20,7 @@ const FormTextarea = styled.textarea`
   width: 100%;
   padding: 12px;
   font-size: 1rem;
-  border: 1px solid #ccc;
+  border: 2px solid ${props => props.$hasError ? '#e74c3c' : '#ccc'};
   border-radius: 4px;
   resize: vertical;
   min-height: 100px;
@@ -28,8 +28,20 @@ const FormTextarea = styled.textarea`
   
   &:focus {
     outline: none;
-    border-color: #ffadad;
+    border-color: ${props => props.$hasError ? '#e74c3c' : '#ffadad'};
   }
+`
+
+const CharacterCount = styled.p`
+  text-align: right;
+  font-size: 0.85rem;
+  margin: 8px 0 0 0;
+  color: ${props => {
+    if (props.$count < 5) return '#e74c3c'
+    if (props.$count > 140) return '#e74c3c'
+    if (props.$count > 120) return '#f39c12'
+    return '#666'
+  }};
 `
 
 const SubmitButton = styled.button`
@@ -37,21 +49,25 @@ const SubmitButton = styled.button`
   width: 100%;
   margin-top: 16px;
   padding: 14px 24px;
-  background-color: #ffadad;
-  color: #222;
+  background-color: ${props => props.disabled ? '#ccc' : '#ffadad'};
+  color: ${props => props.disabled ? '#888' : '#222'};
   font-size: 1.1rem;
   font-weight: 600;
   border: none;
   border-radius: 40px;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   transition: background-color 0.2s ease;
   
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: #ff8585;
   }
 `
 
-export const ThoughtForm = ({ onSubmit, message, onMessageChange }) => {
+export const ThoughtForm = ({ onSubmit, message, onMessageChange, isSubmitting }) => {
+  const charCount = message.length
+  const isValidLength = charCount >= 5 && charCount <= 140
+  const hasError = charCount > 0 && !isValidLength
+  
   return (
     <FormCard onSubmit={onSubmit}>
       <FormLabel htmlFor="thought-input">
@@ -63,9 +79,13 @@ export const ThoughtForm = ({ onSubmit, message, onMessageChange }) => {
         rows={4}
         value={message}
         onChange={(e) => onMessageChange(e.target.value)}
+        $hasError={hasError}
       />
-      <SubmitButton type="submit">
-        ❤️ Send Happy Thought ❤️
+      <CharacterCount $count={charCount}>
+        {charCount}/140 {charCount < 5 && charCount > 0 && '(min 5 characters)'}
+      </CharacterCount>
+      <SubmitButton type="submit" disabled={!isValidLength || isSubmitting}>
+        {isSubmitting ? 'Sending...' : '❤️ Send Happy Thought ❤️'}
       </SubmitButton>
     </FormCard>
   )
