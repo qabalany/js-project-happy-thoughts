@@ -45,6 +45,15 @@ const HeartButton = styled.button`
     background-color: #ffadad;
     transform: scale(1.1);
   }
+  
+  &:focus {
+    outline: 3px solid #ff8585;
+    outline-offset: 2px;
+  }
+  
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
 `
 
 const LikeCount = styled.span`
@@ -80,7 +89,11 @@ export const ThoughtCard = ({ id, message, hearts, createdAt, onLike }) => {
       <Message>{message}</Message>
       <Footer>
         <LikeSection>
-          <HeartButton onClick={() => onLike(id)} $isLiked={isLiked}>
+          <HeartButton 
+            onClick={() => onLike(id)} 
+            $isLiked={isLiked}
+            aria-label={`Like this thought, currently ${hearts} likes`}
+          >
             ❤️
           </HeartButton>
           <LikeCount>x {hearts}</LikeCount>

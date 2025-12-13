@@ -61,6 +61,15 @@ const SubmitButton = styled.button`
   &:hover:not(:disabled) {
     background-color: #ff8585;
   }
+  
+  &:focus {
+    outline: 3px solid #ff8585;
+    outline-offset: 2px;
+  }
+  
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
 `
 
 export const ThoughtForm = ({ onSubmit, message, onMessageChange, isSubmitting }) => {
@@ -81,7 +90,7 @@ export const ThoughtForm = ({ onSubmit, message, onMessageChange, isSubmitting }
         onChange={(e) => onMessageChange(e.target.value)}
         $hasError={hasError}
       />
-      <CharacterCount $count={charCount}>
+      <CharacterCount $count={charCount} aria-live="polite">
         {charCount}/140 
         {charCount < 5 && charCount > 0 && ' (min 5 characters)'}
         {charCount > 140 && ` (${charCount - 140} characters over limit)`}
