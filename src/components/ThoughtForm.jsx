@@ -82,7 +82,9 @@ export const ThoughtForm = ({ onSubmit, message, onMessageChange, isSubmitting }
         $hasError={hasError}
       />
       <CharacterCount $count={charCount}>
-        {charCount}/140 {charCount < 5 && charCount > 0 && '(min 5 characters)'}
+        {charCount}/140 
+        {charCount < 5 && charCount > 0 && ' (min 5 characters)'}
+        {charCount > 140 && ` (${charCount - 140} characters over limit)`}
       </CharacterCount>
       <SubmitButton type="submit" disabled={!isValidLength || isSubmitting}>
         {isSubmitting ? 'Sending...' : '❤️ Send Happy Thought ❤️'}
