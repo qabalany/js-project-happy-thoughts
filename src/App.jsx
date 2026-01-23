@@ -4,6 +4,10 @@ import { ThoughtForm } from './components/ThoughtForm'
 import { ThoughtList } from './components/ThoughtList'
 import { supabase } from './supabase'
 
+// Character limit constants (shared with ThoughtForm)
+const MIN_LENGTH = 5
+const MAX_LENGTH = 140
+
 const MainWrapper = styled.main`
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -40,6 +44,12 @@ export const App = () => {
   
   // State for submitting (loading state for form)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // State for liked thoughts (from localStorage)
+  const [likedThoughts, setLikedThoughts] = useState(() => {
+    const saved = localStorage.getItem('likedThoughts')
+    return saved ? JSON.parse(saved) : []
+  })
 
   // Fetch thoughts from Supabase when component mounts
   useEffect(() => {
@@ -65,7 +75,7 @@ export const App = () => {
     event.preventDefault()
     
     if (!newMessage.trim()) return
-    if (newMessage.length < 5 || newMessage.length > 140) return
+    if (newMessage.length < MIN_LENGTH || newMessage.length > MAX_LENGTH) return
     
     setIsSubmitting(true)
     
@@ -86,6 +96,11 @@ export const App = () => {
 
   // Function to like a thought (UPDATE in Supabase)
   const handleLikeThought = async (thoughtId) => {
+    // Check if already liked (prevent duplicate likes)
+    if (likedThoughts.includes(thoughtId)) {
+      return // Already liked, don't allow liking again
+    }
+    
     // Find current hearts count
     const thought = thoughts.find(t => t.id === thoughtId)
     const newHearts = (thought?.hearts || 0) + 1
@@ -98,6 +113,7 @@ export const App = () => {
     if (error) {
       console.error("Error liking thought:", error)
     } else {
+      // Update state
       setThoughts(prevThoughts =>
         prevThoughts.map(t =>
           t.id === thoughtId
@@ -105,6 +121,11 @@ export const App = () => {
             : t
         )
       )
+      
+      // Save to localStorage
+      const updatedLikes = [...likedThoughts, thoughtId]
+      setLikedThoughts(updatedLikes)
+      localStorage.setItem('likedThoughts', JSON.stringify(updatedLikes))
     }
   }
 
@@ -121,7 +142,11 @@ export const App = () => {
         {loading ? (
           <LoadingText>Loading thoughts...</LoadingText>
         ) : (
-          <ThoughtList thoughts={thoughts} onLike={handleLikeThought} />
+          <ThoughtList 
+            thoughts={thoughts} 
+            onLike={handleLikeThought} 
+            likedThoughts={likedThoughts}
+          />
         )}
       </Container>
     </MainWrapper>

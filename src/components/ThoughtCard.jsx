@@ -41,9 +41,14 @@ const HeartButton = styled.button`
   justify-content: center;
   transition: all 0.2s ease;
   
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: #ffadad;
     transform: scale(1.1);
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
   }
   
   &:focus {
@@ -81,9 +86,7 @@ const formatTimeAgo = (dateString) => {
   return `${days} days ago`
 }
 
-export const ThoughtCard = ({ id, message, hearts, createdAt, onLike }) => {
-  const isLiked = hearts > 0
-  
+export const ThoughtCard = ({ id, message, hearts, createdAt, onLike, isLiked }) => {
   return (
     <Card>
       <Message>{message}</Message>
@@ -92,7 +95,8 @@ export const ThoughtCard = ({ id, message, hearts, createdAt, onLike }) => {
           <HeartButton 
             onClick={() => onLike(id)} 
             $isLiked={isLiked}
-            aria-label={`Like this thought, currently ${hearts} likes`}
+            disabled={isLiked}
+            aria-label={isLiked ? `You liked this thought, total ${hearts} likes` : `Like this thought, currently ${hearts} likes`}
           >
             ❤️
           </HeartButton>

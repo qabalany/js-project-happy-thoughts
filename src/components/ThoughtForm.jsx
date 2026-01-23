@@ -1,5 +1,10 @@
 import styled from 'styled-components'
 
+// Character limit constants
+const MIN_LENGTH = 5
+const MAX_LENGTH = 140
+const WARNING_THRESHOLD = 120
+
 const FormCard = styled.form`
   background-color: #f0f0f0;
   padding: 24px;
@@ -37,9 +42,9 @@ const CharacterCount = styled.p`
   font-size: 0.85rem;
   margin: 8px 0 0 0;
   color: ${props => {
-    if (props.$count < 5) return '#e74c3c'
-    if (props.$count > 140) return '#e74c3c'
-    if (props.$count > 120) return '#f39c12'
+    if (props.$count < MIN_LENGTH) return '#e74c3c'
+    if (props.$count > MAX_LENGTH) return '#e74c3c'
+    if (props.$count > WARNING_THRESHOLD) return '#f39c12'
     return '#666'
   }};
 `
@@ -74,7 +79,7 @@ const SubmitButton = styled.button`
 
 export const ThoughtForm = ({ onSubmit, message, onMessageChange, isSubmitting }) => {
   const charCount = message.length
-  const isValidLength = charCount >= 5 && charCount <= 140
+  const isValidLength = charCount >= MIN_LENGTH && charCount <= MAX_LENGTH
   const hasError = charCount > 0 && !isValidLength
   
   return (
@@ -91,9 +96,9 @@ export const ThoughtForm = ({ onSubmit, message, onMessageChange, isSubmitting }
         $hasError={hasError}
       />
       <CharacterCount $count={charCount} aria-live="polite">
-        {charCount}/140 
-        {charCount < 5 && charCount > 0 && ' (min 5 characters)'}
-        {charCount > 140 && ` (${charCount - 140} characters over limit)`}
+        {charCount}/{MAX_LENGTH} 
+        {charCount < MIN_LENGTH && charCount > 0 && ` (min ${MIN_LENGTH} characters)`}
+        {charCount > MAX_LENGTH && ` (${charCount - MAX_LENGTH} characters over limit)`}
       </CharacterCount>
       <SubmitButton type="submit" disabled={!isValidLength || isSubmitting}>
         {isSubmitting ? 'Sending...' : '❤️ Send Happy Thought ❤️'}

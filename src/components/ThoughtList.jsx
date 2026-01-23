@@ -6,7 +6,7 @@ const ListSection = styled.section`
   flex-direction: column;
 `
 
-export const ThoughtList = ({ thoughts, onLike }) => {
+export const ThoughtList = ({ thoughts, onLike, likedThoughts }) => {
   return (
     <ListSection>
       {thoughts.map(thought => (
@@ -17,6 +17,7 @@ export const ThoughtList = ({ thoughts, onLike }) => {
           hearts={thought.hearts}
           createdAt={thought.created_at}
           onLike={onLike}
+          isLiked={likedThoughts.includes(thought.id)}
         />
       ))}
     </ListSection>
