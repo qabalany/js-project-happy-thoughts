@@ -16,6 +16,23 @@ const Message = styled.p`
   word-wrap: break-word;
 `
 
+const EditTextarea = styled.textarea`
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 2px solid #ffadad;
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+  margin-bottom: 12px;
+
+  &:focus {
+    outline: none;
+    border-color: #ff8585;
+  }
+`
+
 const Footer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -71,6 +88,66 @@ const TimeStamp = styled.span`
   color: #999;
 `
 
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+`
+
+const ActionButton = styled.button`
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: 3px solid #ff8585;
+    outline-offset: 2px;
+  }
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+`
+
+const EditButton = styled(ActionButton)`
+  background-color: #e3f2fd;
+  color: #1976d2;
+
+  &:hover {
+    background-color: #bbdefb;
+  }
+`
+
+const DeleteButton = styled(ActionButton)`
+  background-color: #ffebee;
+  color: #d32f2f;
+
+  &:hover {
+    background-color: #ffcdd2;
+  }
+`
+
+const SaveButton = styled(ActionButton)`
+  background-color: #e8f5e9;
+  color: #388e3c;
+
+  &:hover {
+    background-color: #c8e6c9;
+  }
+`
+
+const CancelButton = styled(ActionButton)`
+  background-color: #f5f5f5;
+  color: #666;
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
+`
+
 // Helper function to format time
 const formatTimeAgo = (dateString) => {
   const now = new Date()
@@ -86,24 +163,67 @@ const formatTimeAgo = (dateString) => {
   return `${days} days ago`
 }
 
-export const ThoughtCard = ({ id, message, hearts, createdAt, onLike, isLiked }) => {
+export const ThoughtCard = ({ 
+  id, 
+  message, 
+  hearts, 
+  createdAt, 
+  onLike, 
+  isLiked,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
+  isEditing,
+  editMessage,
+  onEditMessageChange
+}) => {
   return (
     <Card>
-      <Message>{message}</Message>
-      <Footer>
-        <LikeSection>
-          <HeartButton 
-            onClick={() => onLike(id)} 
-            $isLiked={isLiked}
-            disabled={isLiked}
-            aria-label={isLiked ? `You liked this thought, total ${hearts} likes` : `Like this thought, currently ${hearts} likes`}
-          >
-            ❤️
-          </HeartButton>
-          <LikeCount>x {hearts}</LikeCount>
-        </LikeSection>
-        <TimeStamp>{formatTimeAgo(createdAt)}</TimeStamp>
-      </Footer>
+      {isEditing ? (
+        <>
+          <EditTextarea
+            value={editMessage}
+            onChange={(e) => onEditMessageChange(e.target.value)}
+            placeholder="Edit your thought..."
+            aria-label="Edit thought message"
+          />
+          <ActionButtons>
+            <SaveButton onClick={() => onSaveEdit(id)}>
+              ✓ Save
+            </SaveButton>
+            <CancelButton onClick={onCancelEdit}>
+              ✕ Cancel
+            </CancelButton>
+          </ActionButtons>
+        </>
+      ) : (
+        <>
+          <Message>{message}</Message>
+          <Footer>
+            <LikeSection>
+              <HeartButton 
+                onClick={() => onLike(id)} 
+                $isLiked={isLiked}
+                disabled={isLiked}
+                aria-label={isLiked ? `You liked this thought, total ${hearts} likes` : `Like this thought, currently ${hearts} likes`}
+              >
+                ❤️
+              </HeartButton>
+              <LikeCount>x {hearts}</LikeCount>
+            </LikeSection>
+            <TimeStamp>{formatTimeAgo(createdAt)}</TimeStamp>
+          </Footer>
+          <ActionButtons>
+            <EditButton onClick={() => onStartEdit(id, message)}>
+               Edit
+            </EditButton>
+            <DeleteButton onClick={() => onDelete(id)}>
+               Delete
+            </DeleteButton>
+          </ActionButtons>
+        </>
+      )}
     </Card>
   )
 }

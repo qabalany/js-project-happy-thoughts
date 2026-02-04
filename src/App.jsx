@@ -53,6 +53,10 @@ export const App = () => {
     return saved ? JSON.parse(saved) : []
   })
 
+  // State for editing a thought
+  const [editingId, setEditingId] = useState(null)
+  const [editMessage, setEditMessage] = useState("")
+
   // Fetch thoughts from API when component mounts
   useEffect(() => {
     const fetchThoughts = async () => {
@@ -139,6 +143,71 @@ export const App = () => {
     }
   }
 
+  // Function to start editing a thought
+  const handleStartEdit = (thoughtId, currentMessage) => {
+    setEditingId(thoughtId)
+    setEditMessage(currentMessage)
+  }
+
+  // Function to cancel editing
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditMessage("")
+  }
+
+  // Function to save edited thought (PUT to API)
+  const handleSaveEdit = async (thoughtId) => {
+    if (!editMessage.trim()) return
+    if (editMessage.length < MIN_LENGTH || editMessage.length > MAX_LENGTH) return
+
+    try {
+      const response = await fetch(`${API_URL}/thoughts/${thoughtId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: editMessage })
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        setThoughts(prevThoughts =>
+          prevThoughts.map(t =>
+            t._id === thoughtId
+              ? { ...t, message: data.message }
+              : t
+          )
+        )
+        setEditingId(null)
+        setEditMessage("")
+      } else {
+        console.error("Error updating thought:", data.error)
+      }
+    } catch (error) {
+      console.error("Error updating thought:", error)
+    }
+  }
+
+  // Function to delete a thought (DELETE from API)
+  const handleDeleteThought = async (thoughtId) => {
+    if (!window.confirm("Are you sure you want to delete this thought?")) return
+
+    try {
+      const response = await fetch(`${API_URL}/thoughts/${thoughtId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setThoughts(prevThoughts =>
+          prevThoughts.filter(t => t._id !== thoughtId)
+        )
+      } else {
+        const data = await response.json()
+        console.error("Error deleting thought:", data.error)
+      }
+    } catch (error) {
+      console.error("Error deleting thought:", error)
+    }
+  }
+
   return (
     <MainWrapper>
       <Container>
@@ -156,6 +225,13 @@ export const App = () => {
             thoughts={thoughts} 
             onLike={handleLikeThought} 
             likedThoughts={likedThoughts}
+            onStartEdit={handleStartEdit}
+            onCancelEdit={handleCancelEdit}
+            onSaveEdit={handleSaveEdit}
+            onDelete={handleDeleteThought}
+            editingId={editingId}
+            editMessage={editMessage}
+            onEditMessageChange={setEditMessage}
           />
         )}
       </Container>

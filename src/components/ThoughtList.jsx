@@ -6,7 +6,18 @@ const ListSection = styled.section`
   flex-direction: column;
 `
 
-export const ThoughtList = ({ thoughts, onLike, likedThoughts }) => {
+export const ThoughtList = ({ 
+  thoughts, 
+  onLike, 
+  likedThoughts,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
+  editingId,
+  editMessage,
+  onEditMessageChange
+}) => {
   return (
     <ListSection>
       {thoughts.map(thought => (
@@ -18,6 +29,13 @@ export const ThoughtList = ({ thoughts, onLike, likedThoughts }) => {
           createdAt={thought.createdAt}
           onLike={onLike}
           isLiked={likedThoughts.includes(thought._id)}
+          onStartEdit={onStartEdit}
+          onCancelEdit={onCancelEdit}
+          onSaveEdit={onSaveEdit}
+          onDelete={onDelete}
+          isEditing={editingId === thought._id}
+          editMessage={editMessage}
+          onEditMessageChange={onEditMessageChange}
         />
       ))}
     </ListSection>
