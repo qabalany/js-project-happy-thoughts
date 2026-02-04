@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { ThoughtForm } from './components/ThoughtForm'
 import { ThoughtList } from './components/ThoughtList'
-import { supabase } from './supabase'
+
+// Backend API URL
+const API_URL = 'https://js-project-api-7ve2.onrender.com'
 
 // Character limit constants (shared with ThoughtForm)
 const MIN_LENGTH = 5
@@ -51,18 +53,20 @@ export const App = () => {
     return saved ? JSON.parse(saved) : []
   })
 
-  // Fetch thoughts from Supabase when component mounts
+  // Fetch thoughts from API when component mounts
   useEffect(() => {
     const fetchThoughts = async () => {
-      const { data, error } = await supabase
-        .from('thoughts')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
-      if (error) {
+      try {
+        const response = await fetch(`${API_URL}/thoughts`)
+        const data = await response.json()
+        
+        if (response.ok) {
+          setThoughts(data)
+        } else {
+          console.error("Error fetching thoughts:", data.error)
+        }
+      } catch (error) {
         console.error("Error fetching thoughts:", error)
-      } else {
-        setThoughts(data)
       }
       setLoading(false)
     }
@@ -70,7 +74,7 @@ export const App = () => {
     fetchThoughts()
   }, [])
 
-  // Function to add a new thought (POST to Supabase)
+  // Function to add a new thought (POST to API)
   const handleFormSubmit = async (event) => {
     event.preventDefault()
     
@@ -79,53 +83,59 @@ export const App = () => {
     
     setIsSubmitting(true)
     
-    const { data, error } = await supabase
-      .from('thoughts')
-      .insert([{ message: newMessage, hearts: 0 }])
-      .select()
-    
-    if (error) {
+    try {
+      const response = await fetch(`${API_URL}/thoughts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: newMessage })
+      })
+      const data = await response.json()
+      
+      if (response.ok) {
+        setThoughts(prevThoughts => [data, ...prevThoughts])
+        setNewMessage("")
+      } else {
+        console.error("Error posting thought:", data.error)
+      }
+    } catch (error) {
       console.error("Error posting thought:", error)
-    } else {
-      setThoughts(prevThoughts => [data[0], ...prevThoughts])
-      setNewMessage("")
     }
     
     setIsSubmitting(false)
   }
 
-  // Function to like a thought (UPDATE in Supabase)
+  // Function to like a thought (POST to API)
   const handleLikeThought = async (thoughtId) => {
     // Check if already liked (prevent duplicate likes)
     if (likedThoughts.includes(thoughtId)) {
       return // Already liked, don't allow liking again
     }
     
-    // Find current hearts count
-    const thought = thoughts.find(t => t.id === thoughtId)
-    const newHearts = (thought?.hearts || 0) + 1
-    
-    const { error } = await supabase
-      .from('thoughts')
-      .update({ hearts: newHearts })
-      .eq('id', thoughtId)
-    
-    if (error) {
-      console.error("Error liking thought:", error)
-    } else {
-      // Update state
-      setThoughts(prevThoughts =>
-        prevThoughts.map(t =>
-          t.id === thoughtId
-            ? { ...t, hearts: newHearts }
-            : t
-        )
-      )
+    try {
+      const response = await fetch(`${API_URL}/thoughts/${thoughtId}/like`, {
+        method: 'POST'
+      })
+      const data = await response.json()
       
-      // Save to localStorage
-      const updatedLikes = [...likedThoughts, thoughtId]
-      setLikedThoughts(updatedLikes)
-      localStorage.setItem('likedThoughts', JSON.stringify(updatedLikes))
+      if (response.ok) {
+        // Update state with new hearts count from API
+        setThoughts(prevThoughts =>
+          prevThoughts.map(t =>
+            t._id === thoughtId
+              ? { ...t, hearts: data.hearts }
+              : t
+          )
+        )
+        
+        // Save to localStorage
+        const updatedLikes = [...likedThoughts, thoughtId]
+        setLikedThoughts(updatedLikes)
+        localStorage.setItem('likedThoughts', JSON.stringify(updatedLikes))
+      } else {
+        console.error("Error liking thought:", data.error)
+      }
+    } catch (error) {
+      console.error("Error liking thought:", error)
     }
   }
 
