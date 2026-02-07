@@ -8,6 +8,14 @@ const Card = styled.article`
   border: 2px solid #000;
 `
 
+const AuthorName = styled.span`
+  font-size: 0.8rem;
+  color: #1976d2;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6px;
+`
+
 const Message = styled.p`
   font-size: 1.1rem;
   color: #222;
@@ -168,6 +176,7 @@ export const ThoughtCard = ({
   message, 
   hearts, 
   createdAt, 
+  author,
   onLike, 
   isLiked,
   onStartEdit,
@@ -176,8 +185,13 @@ export const ThoughtCard = ({
   onDelete,
   isEditing,
   editMessage,
-  onEditMessageChange
+  onEditMessageChange,
+  currentUser
 }) => {
+  // Check if the current logged-in user is the author of this thought
+  const isOwner = currentUser && author && 
+    (author._id === currentUser._id || author === currentUser._id)
+
   return (
     <Card>
       {isEditing ? (
@@ -199,6 +213,9 @@ export const ThoughtCard = ({
         </>
       ) : (
         <>
+          {author && author.username && (
+            <AuthorName>@{author.username}</AuthorName>
+          )}
           <Message>{message}</Message>
           <Footer>
             <LikeSection>
@@ -214,14 +231,16 @@ export const ThoughtCard = ({
             </LikeSection>
             <TimeStamp>{formatTimeAgo(createdAt)}</TimeStamp>
           </Footer>
-          <ActionButtons>
-            <EditButton onClick={() => onStartEdit(id, message)}>
-               Edit
-            </EditButton>
-            <DeleteButton onClick={() => onDelete(id)}>
-               Delete
-            </DeleteButton>
-          </ActionButtons>
+          {isOwner && (
+            <ActionButtons>
+              <EditButton onClick={() => onStartEdit(id, message)}>
+                 Edit
+              </EditButton>
+              <DeleteButton onClick={() => onDelete(id)}>
+                 Delete
+              </DeleteButton>
+            </ActionButtons>
+          )}
         </>
       )}
     </Card>

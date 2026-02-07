@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { ThoughtForm } from './components/ThoughtForm'
 import { ThoughtList } from './components/ThoughtList'
+import { AuthForm } from './components/AuthForm'
 
 // Backend API URL
 const API_URL = 'https://js-project-api-7ve2.onrender.com'
@@ -34,6 +35,39 @@ const LoadingText = styled.p`
   font-size: 1.1rem;
 `
 
+const UserBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #e8f5e9;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #c8e6c9;
+`
+
+const UserInfo = styled.span`
+  font-size: 0.95rem;
+  color: #2e7d32;
+  font-weight: 500;
+`
+
+const LogoutButton = styled.button`
+  padding: 6px 14px;
+  background-color: #fff;
+  color: #d32f2f;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid #d32f2f;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #ffebee;
+  }
+`
+
 export const App = () => {
   // State for thoughts (list of thoughts)
   const [thoughts, setThoughts] = useState([])
@@ -57,6 +91,25 @@ export const App = () => {
   const [editingId, setEditingId] = useState(null)
   const [editMessage, setEditMessage] = useState("")
 
+  // Auth state
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user')
+    return saved ? JSON.parse(saved) : null
+  })
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('token') || null
+  })
+  const [authLoading, setAuthLoading] = useState(false)
+
+  // Helper: get auth headers
+  const getAuthHeaders = () => {
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    return headers
+  }
+
   // Fetch thoughts from API when component mounts
   useEffect(() => {
     const fetchThoughts = async () => {
@@ -78,6 +131,73 @@ export const App = () => {
     fetchThoughts()
   }, [])
 
+  // =============================================
+  // AUTH HANDLERS
+  // =============================================
+
+  const handleSignup = async (username, email, password) => {
+    setAuthLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        setUser(data.user)
+        setToken(data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('token', data.token)
+        return {} // success
+      } else {
+        return { error: data.error, errors: data.errors }
+      }
+    } catch {
+      return { error: 'Network error. Please try again.' }
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleLogin = async (email, password) => {
+    setAuthLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        setUser(data.user)
+        setToken(data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('token', data.token)
+        return {} // success
+      } else {
+        return { error: data.error }
+      }
+    } catch {
+      return { error: 'Network error. Please try again.' }
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    setToken(null)
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+  }
+
+  // =============================================
+  // THOUGHT HANDLERS
+  // =============================================
+
   // Function to add a new thought (POST to API)
   const handleFormSubmit = async (event) => {
     event.preventDefault()
@@ -90,7 +210,7 @@ export const App = () => {
     try {
       const response = await fetch(`${API_URL}/thoughts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ message: newMessage })
       })
       const data = await response.json()
@@ -155,7 +275,7 @@ export const App = () => {
     setEditMessage("")
   }
 
-  // Function to save edited thought (PUT to API)
+  // Function to save edited thought (PUT to API - requires auth)
   const handleSaveEdit = async (thoughtId) => {
     if (!editMessage.trim()) return
     if (editMessage.length < MIN_LENGTH || editMessage.length > MAX_LENGTH) return
@@ -163,7 +283,7 @@ export const App = () => {
     try {
       const response = await fetch(`${API_URL}/thoughts/${thoughtId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ message: editMessage })
       })
       const data = await response.json()
@@ -186,13 +306,14 @@ export const App = () => {
     }
   }
 
-  // Function to delete a thought (DELETE from API)
+  // Function to delete a thought (DELETE from API - requires auth)
   const handleDeleteThought = async (thoughtId) => {
     if (!window.confirm("Are you sure you want to delete this thought?")) return
 
     try {
       const response = await fetch(`${API_URL}/thoughts/${thoughtId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {
@@ -212,6 +333,21 @@ export const App = () => {
     <MainWrapper>
       <Container>
         <Title>Happy Thoughts</Title>
+
+        {/* Auth section */}
+        {user ? (
+          <UserBar>
+            <UserInfo>👋 Logged in as <strong>{user.username}</strong></UserInfo>
+            <LogoutButton onClick={handleLogout}>Log Out</LogoutButton>
+          </UserBar>
+        ) : (
+          <AuthForm
+            onLogin={handleLogin}
+            onSignup={handleSignup}
+            isLoading={authLoading}
+          />
+        )}
+
         <ThoughtForm 
           onSubmit={handleFormSubmit}
           message={newMessage}
@@ -232,6 +368,7 @@ export const App = () => {
             editingId={editingId}
             editMessage={editMessage}
             onEditMessageChange={setEditMessage}
+            currentUser={user}
           />
         )}
       </Container>

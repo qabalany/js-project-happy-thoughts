@@ -24,6 +24,5 @@ package-lock.json
 *.sln
 *.sw?
 
-# Project context files (not for GitHub)
 src/ignored/
 studymaterial/

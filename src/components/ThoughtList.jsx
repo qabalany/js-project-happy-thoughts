@@ -16,7 +16,8 @@ export const ThoughtList = ({
   onDelete,
   editingId,
   editMessage,
-  onEditMessageChange
+  onEditMessageChange,
+  currentUser
 }) => {
   return (
     <ListSection>
@@ -27,6 +28,7 @@ export const ThoughtList = ({
           message={thought.message}
           hearts={thought.hearts}
           createdAt={thought.createdAt}
+          author={thought.author}
           onLike={onLike}
           isLiked={likedThoughts.includes(thought._id)}
           onStartEdit={onStartEdit}
@@ -36,6 +38,7 @@ export const ThoughtList = ({
           isEditing={editingId === thought._id}
           editMessage={editMessage}
           onEditMessageChange={onEditMessageChange}
+          currentUser={currentUser}
         />
       ))}
     </ListSection>
