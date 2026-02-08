@@ -68,6 +68,70 @@ const LogoutButton = styled.button`
   }
 `
 
+const ControlsBar = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+`
+
+const Select = styled.select`
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 0;
+  flex-shrink: 1;
+`
+
+const FilterButton = styled.button`
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  border: 2px solid ${props => props.$active ? '#ffadad' : '#ccc'};
+  background-color: ${props => props.$active ? '#ffadad' : '#fff'};
+  color: #222;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #ffadad;
+  }
+`
+
+const PaginationBar = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+`
+
+const PageButton = styled.button`
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  border: 2px solid #ccc;
+  background-color: ${props => props.disabled ? '#f5f5f5' : '#fff'};
+  color: ${props => props.disabled ? '#999' : '#222'};
+  border-radius: 4px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: #ffadad;
+  }
+`
+
+const PageInfo = styled.span`
+  font-size: 0.9rem;
+  color: #666;
+`
+
 export const App = () => {
   // State for thoughts (list of thoughts)
   const [thoughts, setThoughts] = useState([])
@@ -91,6 +155,14 @@ export const App = () => {
   const [editingId, setEditingId] = useState(null)
   const [editMessage, setEditMessage] = useState("")
 
+  // Sort, filter & pagination state
+  const [sortBy, setSortBy] = useState("date")
+  const [sortOrder, setSortOrder] = useState("desc")
+  const [minHearts, setMinHearts] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [showLiked, setShowLiked] = useState(false)
+
   // Auth state
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user')
@@ -110,26 +182,39 @@ export const App = () => {
     return headers
   }
 
-  // Fetch thoughts from API when component mounts
-  useEffect(() => {
-    const fetchThoughts = async () => {
-      try {
-        const response = await fetch(`${API_URL}/thoughts`)
-        const data = await response.json()
-        
-        if (response.ok) {
-          setThoughts(data)
-        } else {
-          console.error("Error fetching thoughts:", data.error)
-        }
-      } catch (error) {
-        console.error("Error fetching thoughts:", error)
+  // Fetch thoughts from API (with sort, filter, pagination)
+  const fetchThoughts = async (page = currentPage) => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        sort: sortBy,
+        order: sortOrder,
+        page: page.toString(),
+        limit: "20"
+      })
+      if (minHearts) params.set("minHearts", minHearts)
+
+      const response = await fetch(`${API_URL}/thoughts?${params}`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setThoughts(data.thoughts)
+        setTotalPages(data.pagination.totalPages)
+        setCurrentPage(data.pagination.page)
+      } else {
+        console.error("Error fetching thoughts:", data.error)
       }
-      setLoading(false)
+    } catch (error) {
+      console.error("Error fetching thoughts:", error)
     }
-    
-    fetchThoughts()
-  }, [])
+    setLoading(false)
+  }
+
+  // Fetch on mount and when sort/filter changes
+  useEffect(() => {
+    fetchThoughts(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy, sortOrder, minHearts])
 
   // =============================================
   // AUTH HANDLERS
@@ -337,7 +422,7 @@ export const App = () => {
         {/* Auth section */}
         {user ? (
           <UserBar>
-            <UserInfo>👋 Logged in as <strong>{user.username}</strong></UserInfo>
+            <UserInfo> Logged in as <strong>{user.username}</strong></UserInfo>
             <LogoutButton onClick={handleLogout}>Log Out</LogoutButton>
           </UserBar>
         ) : (
@@ -354,22 +439,71 @@ export const App = () => {
           onMessageChange={setNewMessage}
           isSubmitting={isSubmitting}
         />
+
+        {/* Sort, filter & view controls */}
+        <ControlsBar>
+          <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="date">Sort by Date</option>
+            <option value="hearts">Sort by Hearts</option>
+          </Select>
+          <Select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+            <option value="desc">Newest / Most</option>
+            <option value="asc">Oldest / Least</option>
+          </Select>
+          <Select value={minHearts} onChange={(e) => setMinHearts(e.target.value)}>
+            <option value="">All hearts</option>
+            <option value="1">1+ hearts</option>
+            <option value="5">5+ hearts</option>
+            <option value="10">10+ hearts</option>
+          </Select>
+          {likedThoughts.length > 0 && (
+            <FilterButton
+              $active={showLiked}
+              onClick={() => setShowLiked(!showLiked)}
+            >
+              {showLiked ? 'Show All' : `My Likes (${likedThoughts.length})`}
+            </FilterButton>
+          )}
+        </ControlsBar>
+
         {loading ? (
           <LoadingText>Loading thoughts...</LoadingText>
         ) : (
-          <ThoughtList 
-            thoughts={thoughts} 
-            onLike={handleLikeThought} 
-            likedThoughts={likedThoughts}
-            onStartEdit={handleStartEdit}
-            onCancelEdit={handleCancelEdit}
-            onSaveEdit={handleSaveEdit}
-            onDelete={handleDeleteThought}
-            editingId={editingId}
-            editMessage={editMessage}
-            onEditMessageChange={setEditMessage}
-            currentUser={user}
-          />
+          <>
+            <ThoughtList 
+              thoughts={showLiked 
+                ? thoughts.filter(t => likedThoughts.includes(t._id)) 
+                : thoughts
+              } 
+              onLike={handleLikeThought} 
+              likedThoughts={likedThoughts}
+              onStartEdit={handleStartEdit}
+              onCancelEdit={handleCancelEdit}
+              onSaveEdit={handleSaveEdit}
+              onDelete={handleDeleteThought}
+              editingId={editingId}
+              editMessage={editMessage}
+              onEditMessageChange={setEditMessage}
+              currentUser={user}
+            />
+            {!showLiked && totalPages > 1 && (
+              <PaginationBar>
+                <PageButton 
+                  disabled={currentPage <= 1}
+                  onClick={() => fetchThoughts(currentPage - 1)}
+                >
+                  ← Prev
+                </PageButton>
+                <PageInfo>Page {currentPage} of {totalPages}</PageInfo>
+                <PageButton 
+                  disabled={currentPage >= totalPages}
+                  onClick={() => fetchThoughts(currentPage + 1)}
+                >
+                  Next →
+                </PageButton>
+              </PaginationBar>
+            )}
+          </>
         )}
       </Container>
     </MainWrapper>

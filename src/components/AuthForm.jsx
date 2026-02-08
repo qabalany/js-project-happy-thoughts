@@ -142,7 +142,7 @@ export const AuthForm = ({ onLogin, onSignup, isLoading }) => {
 
   return (
     <AuthCard>
-      <AuthTitle>{isLoginMode ? '🔑 Log In' : '📝 Sign Up'}</AuthTitle>
+      <AuthTitle>{isLoginMode ? 'Log In' : 'Sign Up'}</AuthTitle>
       <Form onSubmit={handleSubmit}>
         {!isLoginMode && (
           <InputGroup>
@@ -194,8 +194,8 @@ export const AuthForm = ({ onLogin, onSignup, isLoading }) => {
           {isLoading 
             ? 'Please wait...' 
             : isLoginMode 
-              ? '🔑 Log In' 
-              : '📝 Create Account'
+              ? 'Log In' 
+              : 'Create Account'
           }
         </SubmitButton>
       </Form>
